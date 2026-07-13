@@ -4,11 +4,13 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 from app.state import AppState
 from app.theme import refresh_style
 
-PAGES = ["Discover", "Search", "Watchlist", "Watched", "Settings"]
+PAGES = ["Home", "Search", "Watchlist", "Watched"]
+DECIDE_MODES = ["Swipe", "Mood Quiz", "Browse", "Surprise"]
 
 
 class NavBar(QFrame):
     page_changed = Signal(str)
+    decide_mode_changed = Signal(str)
 
     def __init__(self, state: AppState, parent=None):
         super().__init__(parent)
@@ -30,7 +32,17 @@ class NavBar(QFrame):
             btn.clicked.connect(lambda checked=False, p=page: self.page_changed.emit(p))
             layout.addWidget(btn)
             self._page_buttons[page] = btn
-        self.set_active_page("Discover")
+        self.set_active_page("Home")
+
+        layout.addStretch()
+
+        self._decide_buttons: dict[str, QPushButton] = {}
+        for name in DECIDE_MODES:
+            btn = QPushButton(name)
+            btn.setProperty("class", "sub-nav")
+            btn.clicked.connect(lambda checked=False, n=name: self.decide_mode_changed.emit(n))
+            layout.addWidget(btn)
+            self._decide_buttons[name] = btn
 
         layout.addStretch()
 
@@ -54,6 +66,11 @@ class NavBar(QFrame):
     def set_active_page(self, page: str) -> None:
         for name, btn in self._page_buttons.items():
             btn.setProperty("active", name == page)
+            refresh_style(btn)
+
+    def set_active_mode(self, mode: str) -> None:
+        for name, btn in self._decide_buttons.items():
+            btn.setProperty("active", name == mode)
             refresh_style(btn)
 
     def _refresh_mode_buttons(self) -> None:

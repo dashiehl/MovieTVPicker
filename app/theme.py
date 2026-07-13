@@ -71,6 +71,34 @@ def build_stylesheet(tokens: dict) -> str:
         color: {tokens['accent_text']};
     }}
 
+    /* --- Home page --- */
+    QLabel[role="home-title"] {{
+        font-size: 22px;
+        font-weight: 700;
+    }}
+    QLabel[role="home-subtitle"] {{
+        color: {tokens['text_muted']};
+        font-size: 13px;
+    }}
+    QPushButton[class="choice-card"] {{
+        background: {tokens['surface']};
+        border: 1px solid {tokens['border']};
+        border-radius: 12px;
+        padding: 18px;
+        color: {tokens['text']};
+        font-size: 15px;
+        font-weight: 600;
+        text-align: left;
+    }}
+    QPushButton[class="choice-card"]:hover {{
+        background: {tokens['surface_alt']};
+    }}
+    QPushButton[class="choice-card"][active="true"] {{
+        background: {tokens['accent']};
+        border-color: {tokens['accent']};
+        color: {tokens['accent_text']};
+    }}
+
     /* --- Sub-nav (discover mode switcher) --- */
     QPushButton[class="sub-nav"] {{
         background: {tokens['surface']};
