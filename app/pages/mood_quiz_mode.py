@@ -19,6 +19,12 @@ QUESTIONS = [
 
 DEFAULT_COUNT = 5
 
+MIN_CARD_WIDTH = 480
+MAX_CARD_WIDTH = 920
+CARD_MARGIN = 32  # each side, matches _question_layout's contentsMargins
+BUTTON_MIN_WIDTH = 150
+GRID_SPACING = 10
+
 
 def _clear_layout(layout) -> None:
     while layout.count():
@@ -46,6 +52,8 @@ class MoodQuizMode(QWidget):
         self._continue_btn: QPushButton | None = None
         self._count = DEFAULT_COUNT
         self.count_spin: QSpinBox | None = None
+        self._current_question: dict | None = None  # non-None only while a multi-select question is showing
+        self._current_columns = 0
 
         outer = QVBoxLayout(self)
         outer.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -59,9 +67,9 @@ class MoodQuizMode(QWidget):
 
         self.question_card = QFrame()
         self.question_card.setProperty("class", "card")
-        self.question_card.setFixedWidth(480)
+        self.question_card.setFixedWidth(MIN_CARD_WIDTH)
         self._question_layout = QVBoxLayout(self.question_card)
-        self._question_layout.setContentsMargins(32, 32, 32, 32)
+        self._question_layout.setContentsMargins(CARD_MARGIN, CARD_MARGIN, CARD_MARGIN, CARD_MARGIN)
         self._question_layout.setSpacing(20)
         self._question_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         page_layout.addWidget(self.question_card, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -101,12 +109,25 @@ class MoodQuizMode(QWidget):
             return sorted(genres)
         return question["options"]
 
-    def _render_step(self) -> None:
-        self.stack.setCurrentWidget(self.question_page)
-        _clear_layout(self._question_layout)
+    def _fit_card_width(self) -> int:
+        available = self.width() - 80 if self.width() > 0 else MAX_CARD_WIDTH
+        return max(MIN_CARD_WIDTH, min(MAX_CARD_WIDTH, available))
 
+    def _fit_columns(self, card_width: int, option_count: int) -> int:
+        inner = card_width - 2 * CARD_MARGIN
+        by_width = max(1, (inner + GRID_SPACING) // (BUTTON_MIN_WIDTH + GRID_SPACING))
+        return max(1, min(by_width, option_count))
+
+    def _render_step(self) -> None:
         question = QUESTIONS[self.step]
         self._selection = set(self.answers.get(question["key"], []))
+        self._current_question = question
+        self._build_question_layout()
+
+    def _build_question_layout(self) -> None:
+        question = self._current_question
+        self.stack.setCurrentWidget(self.question_page)
+        _clear_layout(self._question_layout)
 
         progress = QLabel(f"Step {self.step + 1} of {len(QUESTIONS) + 1}")
         progress.setProperty("role", "muted")
@@ -125,11 +146,13 @@ class MoodQuizMode(QWidget):
         self._question_layout.addWidget(hint)
 
         options = self._current_options(question)
-        columns = 1 if len(options) <= 2 else (2 if len(options) <= 6 else 3)
-        self.question_card.setFixedWidth(560 if columns == 3 else 480)
+        card_width = self._fit_card_width()
+        columns = self._fit_columns(card_width, len(options))
+        self._current_columns = columns
+        self.question_card.setFixedWidth(card_width)
 
         options_grid = QGridLayout()
-        options_grid.setSpacing(10)
+        options_grid.setSpacing(GRID_SPACING)
         for i, opt in enumerate(options):
             label = question.get("labels", {}).get(opt, opt)
             btn = QPushButton(label)
@@ -147,6 +170,15 @@ class MoodQuizMode(QWidget):
         self._continue_btn.setDisabled(not self._selection)
         self._continue_btn.clicked.connect(lambda: self._answer(question, sorted(self._selection)))
         self._question_layout.addWidget(self._continue_btn)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        if self._current_question is None:
+            return
+        card_width = self._fit_card_width()
+        columns = self._fit_columns(card_width, len(self._current_options(self._current_question)))
+        if columns != self._current_columns:
+            self._build_question_layout()
 
     def _toggle_option(self, value: str, checked: bool, btn: QPushButton) -> None:
         if checked:
@@ -167,9 +199,10 @@ class MoodQuizMode(QWidget):
             self._render_count_step()
 
     def _render_count_step(self) -> None:
+        self._current_question = None
         self.stack.setCurrentWidget(self.question_page)
         _clear_layout(self._question_layout)
-        self.question_card.setFixedWidth(480)
+        self.question_card.setFixedWidth(MIN_CARD_WIDTH)
 
         progress = QLabel(f"Step {len(QUESTIONS) + 1} of {len(QUESTIONS) + 1}")
         progress.setProperty("role", "muted")

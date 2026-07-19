@@ -1,8 +1,10 @@
-from PySide6.QtCore import QObject, QThread, Signal
-from PySide6.QtWidgets import QLabel, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtCore import QObject, Qt, QThread, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout
 
 from app.catalog_store import CatalogStore
 from app.config import CATALOG_PATH, CATALOG_SEED_PATH
+from app.state import AppState
+from app.widgets.mode_toggle import ModeToggle
 from scripts.build_catalog import build_catalog
 
 
@@ -18,18 +20,52 @@ class CatalogBuildWorker(QObject):
             self.finished.emit(False, f"Rebuild failed: {exc}")
 
 
-class SettingsPage(QWidget):
-    def __init__(self, catalog: CatalogStore, parent=None):
+class SettingsOverlay(QFrame):
+    """A right-docked panel (not a stacked page) — MainWindow keeps it pinned to
+    the right 20% of the window and shows/hides it instead of navigating away."""
+
+    def __init__(self, catalog: CatalogStore, state: AppState, parent=None):
         super().__init__(parent)
         self.catalog = catalog
+        self.state = state
         self._thread: QThread | None = None
         self._worker: CatalogBuildWorker | None = None
 
-        layout = QVBoxLayout(self)
+        self.setProperty("class", "overlay-panel")
 
-        title = QLabel("Catalog")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 16, 20, 20)
+        layout.setSpacing(16)
+
+        header = QHBoxLayout()
+        title = QLabel("Settings")
         title.setProperty("role", "h1")
-        layout.addWidget(title)
+        header.addWidget(title)
+        header.addStretch()
+        close_btn = QPushButton("✕")
+        close_btn.setProperty("class", "nav-link")
+        close_btn.setToolTip("Close settings")
+        close_btn.clicked.connect(self.hide)
+        header.addWidget(close_btn)
+        layout.addLayout(header)
+
+        appearance_label = QLabel("Appearance")
+        appearance_label.setProperty("role", "h2")
+        layout.addWidget(appearance_label)
+
+        self.theme_btn = QPushButton("☀ Light mode" if self.state.dark_mode else "🌙 Dark mode")
+        self.theme_btn.setProperty("class", "btn-secondary")
+        self.theme_btn.clicked.connect(self._toggle_theme)
+        layout.addWidget(self.theme_btn)
+
+        who_label = QLabel("Who's watching")
+        who_label.setProperty("role", "h2")
+        layout.addWidget(who_label)
+        layout.addWidget(ModeToggle(self.state))
+
+        catalog_label = QLabel("Catalog")
+        catalog_label.setProperty("role", "h2")
+        layout.addWidget(catalog_label)
 
         self.info_label = QLabel()
         self.info_label.setProperty("role", "muted")
@@ -38,7 +74,6 @@ class SettingsPage(QWidget):
 
         self.rebuild_btn = QPushButton("Rebuild catalog now")
         self.rebuild_btn.setProperty("class", "btn")
-        self.rebuild_btn.setFixedWidth(220)
         self.rebuild_btn.clicked.connect(self._start_rebuild)
         layout.addWidget(self.rebuild_btn)
 
@@ -56,6 +91,11 @@ class SettingsPage(QWidget):
 
         catalog.loaded.connect(self._refresh_info)
         self._refresh_info()
+
+    def _toggle_theme(self) -> None:
+        new_dark = not self.state.dark_mode
+        self.state.set_dark_mode(new_dark)
+        self.theme_btn.setText("☀ Light mode" if new_dark else "🌙 Dark mode")
 
     def _refresh_info(self) -> None:
         count = len(self.catalog.items)

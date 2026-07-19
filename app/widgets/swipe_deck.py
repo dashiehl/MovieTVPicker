@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLay
 
 from app.image_loader import ImageLoader
 from app.library_store import LibraryStore
-from app.utils import catalog_key
+from app.utils import catalog_key, display_text
 
 POSTER_SIZE = (280, 400)
 
@@ -127,7 +127,7 @@ class SwipeDeck(QWidget):
             return
 
         self.image_loader.load(item.get("posterPath"), self._set_pixmap)
-        self.title_label.setText(item["title"])
+        self.title_label.setText(display_text(item["title"]))
         media_label = "TV" if item["mediaType"] == "tv" else "Movie"
         self.meta_label.setText(f"{item.get('year') or 'Unknown year'} · {media_label}")
         self._refresh_actions()
@@ -140,7 +140,7 @@ class SwipeDeck(QWidget):
 
     def _set_pixmap(self, pixmap) -> None:
         if pixmap is None:
-            self.poster_label.setText(self._current_item()["title"] if self._current_item() else "")
+            self.poster_label.setText(display_text(self._current_item()["title"]) if self._current_item() else "")
             return
         scaled = pixmap.scaled(
             *POSTER_SIZE, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation

@@ -16,6 +16,12 @@ def build_stylesheet(tokens: dict) -> str:
         font-size: 13px;
     }}
 
+    /* Qt draws a dotted focus rectangle around button text after any click —
+       reads as a stray "highlight" on random words once you've clicked around. */
+    QPushButton {{
+        outline: none;
+    }}
+
     QLabel[role="muted"] {{
         color: {tokens['text_muted']};
     }}
@@ -113,6 +119,25 @@ def build_stylesheet(tokens: dict) -> str:
         color: {tokens['accent_text']};
     }}
 
+    /* --- Filter chips (e.g. Swipe's All/Movies/TV toggle) — quieter than sub-nav --- */
+    QPushButton[class="filter-chip"] {{
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 4px 12px;
+        color: {tokens['text_muted']};
+        font-size: 12px;
+    }}
+    QPushButton[class="filter-chip"]:hover {{
+        background: {tokens['surface_alt']};
+    }}
+    QPushButton[class="filter-chip"][active="true"] {{
+        background: {tokens['surface_alt']};
+        border-color: {tokens['border']};
+        color: {tokens['text']};
+        font-weight: 600;
+    }}
+
     /* --- Buttons --- */
     QPushButton[class="btn"] {{
         background: {tokens['accent']};
@@ -160,6 +185,12 @@ def build_stylesheet(tokens: dict) -> str:
     }}
     QFrame[class="card"][status="watched"] {{
         border-left: 3px solid {tokens['status_watched']};
+    }}
+
+    /* --- Settings overlay --- */
+    QFrame[class="overlay-panel"] {{
+        background: {tokens['surface']};
+        border-left: 1px solid {tokens['border']};
     }}
 
     /* --- Banners --- */

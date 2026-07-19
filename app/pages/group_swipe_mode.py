@@ -86,7 +86,7 @@ class GroupSwipeMode(QWidget):
         self._filter_buttons: dict[str, QPushButton] = {}
         for label, value in MEDIA_FILTERS:
             btn = QPushButton(label)
-            btn.setProperty("class", "sub-nav")
+            btn.setProperty("class", "filter-chip")
             btn.clicked.connect(lambda checked=False, v=value: self._set_media_filter(v))
             filter_row.addWidget(btn)
             self._filter_buttons[value] = btn

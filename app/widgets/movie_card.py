@@ -1,12 +1,12 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QSizePolicy, QVBoxLayout
 
 from app.image_loader import ImageLoader
 from app.library_store import LibraryStore
 from app.theme import refresh_style
-from app.utils import catalog_key
+from app.utils import catalog_key, display_text
 
-POSTER_SIZE = (160, 240)
+POSTER_SIZE = (200, 300)
 
 
 class MovieCard(QFrame):
@@ -16,7 +16,7 @@ class MovieCard(QFrame):
         self.library = library
 
         self.setProperty("class", "card")
-        self.setFixedWidth(POSTER_SIZE[0] + 24)
+        self.setFixedWidth(POSTER_SIZE[0] + 40)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 12)
@@ -29,7 +29,7 @@ class MovieCard(QFrame):
         self.poster_label.setScaledContents(False)
         layout.addWidget(self.poster_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        title_label = QLabel(item["title"])
+        title_label = QLabel(display_text(item["title"]))
         title_label.setProperty("role", "h2")
         title_label.setWordWrap(True)
         title_label.setContentsMargins(12, 0, 12, 0)
@@ -41,8 +41,9 @@ class MovieCard(QFrame):
         meta_label.setContentsMargins(12, 0, 12, 0)
         layout.addWidget(meta_label)
 
-        actions = QHBoxLayout()
+        actions = QVBoxLayout()
         actions.setContentsMargins(12, 4, 12, 0)
+        actions.setSpacing(6)
         self.watchlist_btn = QPushButton()
         self.watchlist_btn.setProperty("class", "card-action")
         self.watchlist_btn.clicked.connect(lambda: self.library.add_to_watchlist(self.item))
@@ -61,7 +62,7 @@ class MovieCard(QFrame):
 
     def _set_pixmap(self, pixmap) -> None:
         if pixmap is None:
-            self.poster_label.setText(self.item["title"])
+            self.poster_label.setText(display_text(self.item["title"]))
             return
         scaled = pixmap.scaled(
             *POSTER_SIZE, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation

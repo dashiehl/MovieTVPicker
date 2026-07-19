@@ -5,9 +5,10 @@ from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushBut
 
 from app.image_loader import ImageLoader
 from app.library_store import LibraryStore
+from app.utils import display_text
+from app.widgets.movie_card import POSTER_SIZE
 
-CARD_WIDTH = 184
-POSTER_SIZE = (160, 240)
+CARD_WIDTH = POSTER_SIZE[0] + 40  # must match MovieCard's setFixedWidth
 
 
 class WatchedPage(QScrollArea):
@@ -15,7 +16,8 @@ class WatchedPage(QScrollArea):
         super().__init__(parent)
         self.image_loader = image_loader
         self.library = library
-        self._cards: list[QFrame] = []
+        self._cards: dict[str, QFrame] = {}
+        self._ordered_cards: list[QFrame] = []
         self._columns = 0
 
         self.setWidgetResizable(True)
@@ -24,24 +26,39 @@ class WatchedPage(QScrollArea):
         self.refresh()
 
     def refresh(self) -> None:
-        scroll_pos = self.verticalScrollBar().value()
         items = sorted(self.library.watched, key=lambda i: i["watchedAt"], reverse=True)
-        self._cards = [self._build_card(item) for item in items]
+        current_ids = {item["id"] for item in items}
+
+        # Reuse existing card widgets for items that are still present — only
+        # genuinely new/removed entries get built/destroyed — so the whole grid
+        # doesn't flicker and re-fetch posters just because the count changed.
+        for stale_id in [cid for cid in self._cards if cid not in current_ids]:
+            card = self._cards.pop(stale_id)
+            card.setParent(None)
+            card.deleteLater()
+
+        for item in items:
+            if item["id"] not in self._cards:
+                self._cards[item["id"]] = self._build_card(item)
+
+        self._ordered_cards = [self._cards[item["id"]] for item in items]
         self._columns = max(1, self.viewport().width() // (CARD_WIDTH + 16))
         self._rebuild()
-        self.verticalScrollBar().setValue(scroll_pos)
 
     def _rebuild(self) -> None:
         # QGridLayout keeps stale column-width metadata even after items are
         # taken out of it, so a changed column count needs a fresh layout
-        # (and container) rather than reusing the old one.
+        # (and container) rather than reusing the old one. The card widgets
+        # themselves are reused (reparented), not recreated.
+        scroll_pos = self.verticalScrollBar().value()
+
         container = QWidget()
         grid = QGridLayout(container)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setSpacing(16)
         grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
-        if not self._cards:
+        if not self._ordered_cards:
             empty_label = QLabel("Nothing marked watched yet.")
             empty_label.setProperty("role", "empty-state")
             empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -49,10 +66,11 @@ class WatchedPage(QScrollArea):
             grid.addWidget(empty_label, 0, 0)
         else:
             columns = self._columns or 1
-            for i, card in enumerate(self._cards):
+            for i, card in enumerate(self._ordered_cards):
                 grid.addWidget(card, i // columns, i % columns)
 
         self.setWidget(container)
+        self.verticalScrollBar().setValue(scroll_pos)
 
     def _reflow(self) -> None:
         if not self._cards:
@@ -61,9 +79,7 @@ class WatchedPage(QScrollArea):
         if columns == self._columns:
             return
         self._columns = columns
-        scroll_pos = self.verticalScrollBar().value()
         self._rebuild()
-        self.verticalScrollBar().setValue(scroll_pos)
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
@@ -87,14 +103,14 @@ class WatchedPage(QScrollArea):
 
         def set_pixmap(pixmap):
             if pixmap is None:
-                poster.setText(item["title"])
+                poster.setText(display_text(item["title"]))
                 return
             poster.setPixmap(pixmap.scaled(*POSTER_SIZE, Qt.AspectRatioMode.KeepAspectRatioByExpanding,
                                             Qt.TransformationMode.SmoothTransformation))
 
         self.image_loader.load(item.get("posterPath"), set_pixmap)
 
-        title = QLabel(item["title"])
+        title = QLabel(display_text(item["title"]))
         title.setProperty("role", "h2")
         title.setWordWrap(True)
         title.setContentsMargins(12, 0, 12, 0)

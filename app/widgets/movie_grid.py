@@ -3,9 +3,9 @@ from PySide6.QtWidgets import QGridLayout, QLabel, QScrollArea, QWidget
 
 from app.image_loader import ImageLoader
 from app.library_store import LibraryStore
-from app.widgets.movie_card import MovieCard
+from app.widgets.movie_card import POSTER_SIZE, MovieCard
 
-CARD_WIDTH = 184
+CARD_WIDTH = POSTER_SIZE[0] + 40  # must match MovieCard's setFixedWidth
 COLUMN_SPACING = 16
 
 

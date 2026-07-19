@@ -48,23 +48,6 @@ class NavBar(QFrame):
 
         layout.addStretch()
 
-        self.solo_btn = QPushButton("Solo")
-        self.solo_btn.setProperty("class", "mode-toggle")
-        self.solo_btn.clicked.connect(lambda: self.state.set_mode("solo"))
-        self.group_btn = QPushButton("Group")
-        self.group_btn.setProperty("class", "mode-toggle")
-        self.group_btn.clicked.connect(lambda: self.state.set_mode("group"))
-        layout.addWidget(self.solo_btn)
-        layout.addWidget(self.group_btn)
-
-        self.theme_btn = QPushButton("☀ Light" if self.state.dark_mode else "🌙 Dark")
-        self.theme_btn.setProperty("class", "nav-link")
-        self.theme_btn.clicked.connect(self._toggle_theme)
-        layout.addWidget(self.theme_btn)
-
-        self._refresh_mode_buttons()
-        self.state.mode_changed.connect(lambda _mode: self._refresh_mode_buttons())
-
     def _on_nav_clicked(self, name: str, kind: str) -> None:
         if kind == "page":
             self.page_changed.emit(name)
@@ -75,14 +58,3 @@ class NavBar(QFrame):
         for n, btn in self._nav_buttons.items():
             btn.setProperty("active", n == name)
             refresh_style(btn)
-
-    def _refresh_mode_buttons(self) -> None:
-        self.solo_btn.setProperty("active", self.state.mode == "solo")
-        self.group_btn.setProperty("active", self.state.mode == "group")
-        refresh_style(self.solo_btn)
-        refresh_style(self.group_btn)
-
-    def _toggle_theme(self) -> None:
-        new_dark = not self.state.dark_mode
-        self.state.set_dark_mode(new_dark)
-        self.theme_btn.setText("☀ Light" if new_dark else "🌙 Dark")
