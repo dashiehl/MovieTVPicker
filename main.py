@@ -13,11 +13,13 @@ def main() -> None:
 
     window = MainWindow()
 
-    def on_theme_changed(dark: bool) -> None:
-        apply_theme(app, DARK_TOKENS if dark else LIGHT_TOKENS)
+    def refresh_theme(*_args) -> None:
+        tokens = DARK_TOKENS if window.state.dark_mode else LIGHT_TOKENS
+        apply_theme(app, tokens, window.state.font_family)
 
-    window.state.theme_changed.connect(on_theme_changed)
-    apply_theme(app, DARK_TOKENS if window.state.dark_mode else LIGHT_TOKENS)
+    window.state.theme_changed.connect(refresh_theme)
+    window.state.font_changed.connect(refresh_theme)
+    refresh_theme()
 
     window.show()
     sys.exit(app.exec())

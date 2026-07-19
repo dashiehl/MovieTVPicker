@@ -11,6 +11,24 @@ SOLO_PROFILE = "Solo"
 
 STALE_AFTER_DAYS = 180
 
+# Curated font choices for Settings — each maps a friendly label to a CSS
+# font-family stack (with a matching generic fallback) for the QSS stylesheet.
+FONT_OPTIONS = [
+    ("Segoe UI", "'Segoe UI', sans-serif"),
+    ("Calibri", "'Calibri', sans-serif"),
+    ("Verdana", "'Verdana', sans-serif"),
+    ("Tahoma", "'Tahoma', sans-serif"),
+    ("Trebuchet MS", "'Trebuchet MS', sans-serif"),
+    ("Arial", "'Arial', sans-serif"),
+    ("Century Gothic", "'Century Gothic', sans-serif"),
+    ("Georgia", "'Georgia', serif"),
+    ("Cambria", "'Cambria', serif"),
+    ("Times New Roman", "'Times New Roman', serif"),
+    ("Consolas", "'Consolas', monospace"),
+]
+FONT_STACKS = dict(FONT_OPTIONS)
+DEFAULT_FONT = "Segoe UI"
+
 # Semantic color tokens. No widget should hardcode a color — everything
 # reads from these dicts so light/dark can swap at runtime.
 LIGHT_TOKENS = {

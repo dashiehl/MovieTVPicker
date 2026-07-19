@@ -1,8 +1,8 @@
-from PySide6.QtCore import QObject, Qt, QThread, Signal
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout
+from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout
 
 from app.catalog_store import CatalogStore
-from app.config import CATALOG_PATH, CATALOG_SEED_PATH
+from app.config import CATALOG_PATH, CATALOG_SEED_PATH, FONT_OPTIONS
 from app.state import AppState
 from app.widgets.mode_toggle import ModeToggle
 from scripts.build_catalog import build_catalog
@@ -21,8 +21,8 @@ class CatalogBuildWorker(QObject):
 
 
 class SettingsOverlay(QFrame):
-    """A right-docked panel (not a stacked page) — MainWindow keeps it pinned to
-    the right 20% of the window and shows/hides it instead of navigating away."""
+    """A left-docked panel (not a stacked page) — MainWindow keeps it pinned to
+    the left 20% of the window and shows/hides it instead of navigating away."""
 
     def __init__(self, catalog: CatalogStore, state: AppState, parent=None):
         super().__init__(parent)
@@ -57,6 +57,17 @@ class SettingsOverlay(QFrame):
         self.theme_btn.setProperty("class", "btn-secondary")
         self.theme_btn.clicked.connect(self._toggle_theme)
         layout.addWidget(self.theme_btn)
+
+        font_label = QLabel("Font")
+        font_label.setProperty("role", "muted")
+        layout.addWidget(font_label)
+
+        self.font_combo = QComboBox()
+        for label, _stack in FONT_OPTIONS:
+            self.font_combo.addItem(label)
+        self.font_combo.setCurrentText(self.state.font_family)
+        self.font_combo.currentTextChanged.connect(self.state.set_font_family)
+        layout.addWidget(self.font_combo)
 
         who_label = QLabel("Who's watching")
         who_label.setProperty("role", "h2")

@@ -1,18 +1,20 @@
 from PySide6.QtCore import QObject, Signal
 
-from app.config import SOLO_PROFILE
+from app.config import DEFAULT_FONT, SOLO_PROFILE
 
 
 class AppState(QObject):
     mode_changed = Signal(str)  # "solo" | "group"
     participants_changed = Signal(list)
     theme_changed = Signal(bool)  # dark_mode
+    font_changed = Signal(str)  # font family label, see config.FONT_OPTIONS
 
     def __init__(self):
         super().__init__()
         self._mode = "solo"
         self._group_participants: list[str] = []
         self._dark_mode = True
+        self._font_family = DEFAULT_FONT
 
     @property
     def mode(self) -> str:
@@ -47,3 +49,12 @@ class AppState(QObject):
         if dark != self._dark_mode:
             self._dark_mode = dark
             self.theme_changed.emit(dark)
+
+    @property
+    def font_family(self) -> str:
+        return self._font_family
+
+    def set_font_family(self, family: str) -> None:
+        if family != self._font_family:
+            self._font_family = family
+            self.font_changed.emit(family)

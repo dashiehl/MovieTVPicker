@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import QApplication, QWidget
 
+from app.config import FONT_STACKS, DEFAULT_FONT
+
 
 def refresh_style(widget: QWidget) -> None:
     """Call after changing a dynamic property (e.g. 'active') so QSS re-evaluates it."""
@@ -7,12 +9,13 @@ def refresh_style(widget: QWidget) -> None:
     widget.style().polish(widget)
 
 
-def build_stylesheet(tokens: dict) -> str:
+def build_stylesheet(tokens: dict, font_family: str = DEFAULT_FONT) -> str:
+    font_stack = FONT_STACKS.get(font_family, FONT_STACKS[DEFAULT_FONT])
     return f"""
     QMainWindow, QWidget {{
         background: {tokens['bg']};
         color: {tokens['text']};
-        font-family: 'Segoe UI', sans-serif;
+        font-family: {font_stack};
         font-size: 13px;
     }}
 
@@ -292,5 +295,5 @@ def build_stylesheet(tokens: dict) -> str:
     """
 
 
-def apply_theme(app: QApplication, tokens: dict) -> None:
-    app.setStyleSheet(build_stylesheet(tokens))
+def apply_theme(app: QApplication, tokens: dict, font_family: str = DEFAULT_FONT) -> None:
+    app.setStyleSheet(build_stylesheet(tokens, font_family))
