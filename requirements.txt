@@ -1,2 +1,6 @@
 PySide6>=6.11
 requests>=2.31
+# Patches ssl/requests to trust the OS certificate store — plain requests fails
+# outbound HTTPS on this network with CERTIFICATE_VERIFY_FAILED (corporate root CA
+# not in Python's bundled certifi store). Needed for scripts/build_catalog.py.
+pip-system-certs

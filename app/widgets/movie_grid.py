@@ -15,33 +15,54 @@ class MovieGrid(QScrollArea):
         self.image_loader = image_loader
         self.library = library
         self.empty_message = empty_message
+        self._cards: list[MovieCard] = []
+        self._columns = 0
 
         self.setWidgetResizable(True)
-        self._container = QWidget()
-        self._grid = QGridLayout(self._container)
-        self._grid.setSpacing(COLUMN_SPACING)
-        self._grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        self.setWidget(self._container)
-
         self.set_items([])
 
     def set_items(self, items: list[dict]) -> None:
-        # Every child (including any previous empty-state label) gets deleteLater()'d
-        # here, so a fresh label is built below rather than reusing a persisted one —
-        # reusing one across multiple clear cycles crashes once Qt actually deletes it.
-        while self._grid.count():
-            child = self._grid.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+        scroll_pos = self.verticalScrollBar().value()
+        self._cards = [MovieCard(item, self.image_loader, self.library) for item in items]
+        self._columns = max(1, self.viewport().width() // (CARD_WIDTH + COLUMN_SPACING))
+        self._rebuild()
+        self.verticalScrollBar().setValue(scroll_pos)
 
-        if not items:
+    def _rebuild(self) -> None:
+        # QGridLayout keeps stale column-width metadata even after items are
+        # taken out of it, so a changed column count needs a fresh layout
+        # (and container) rather than reusing the old one — otherwise the
+        # scroll area keeps sizing itself for the previous, wider layout.
+        container = QWidget()
+        grid = QGridLayout(container)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(COLUMN_SPACING)
+        grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+
+        if not self._cards:
             empty_label = QLabel(self.empty_message)
             empty_label.setProperty("role", "empty-state")
             empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self._grid.addWidget(empty_label, 0, 0)
-            return
+            empty_label.setWordWrap(True)
+            grid.addWidget(empty_label, 0, 0)
+        else:
+            columns = self._columns or 1
+            for i, card in enumerate(self._cards):
+                grid.addWidget(card, i // columns, i % columns)
 
-        columns = max(1, (self.viewport().width() or 900) // (CARD_WIDTH + COLUMN_SPACING))
-        for i, item in enumerate(items):
-            card = MovieCard(item, self.image_loader, self.library)
-            self._grid.addWidget(card, i // columns, i % columns)
+        self.setWidget(container)  # takes ownership; old container is deleted
+
+    def _reflow(self) -> None:
+        if not self._cards:
+            return
+        columns = max(1, self.viewport().width() // (CARD_WIDTH + COLUMN_SPACING))
+        if columns == self._columns:
+            return
+        self._columns = columns
+        scroll_pos = self.verticalScrollBar().value()
+        self._rebuild()
+        self.verticalScrollBar().setValue(scroll_pos)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._reflow()

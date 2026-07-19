@@ -7,7 +7,7 @@ from app.theme import refresh_style
 DECIDE_MODES = [
     ("Swipe", "Like or pass on picks, one at a time."),
     ("Mood Quiz", "Answer a few questions to get a match."),
-    ("Browse", "Filter and sort the whole catalog yourself."),
+    ("Browse", "Search, filter, and sort the whole catalog yourself."),
     ("Surprise", "Get one random pick, no questions asked."),
 ]
 

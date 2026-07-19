@@ -7,7 +7,6 @@ from app.pages.browse_mode import BrowseMode
 from app.pages.group_swipe_mode import GroupSwipeMode
 from app.pages.home_page import HomePage
 from app.pages.mood_quiz_mode import MoodQuizMode
-from app.pages.search_page import SearchPage
 from app.pages.settings_page import SettingsPage
 from app.pages.surprise_mode import SurpriseMode
 from app.pages.swipe_mode import SwipeMode
@@ -25,6 +24,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Watch Picker")
+        self.setMinimumSize(860, 600)
         self.resize(1180, 800)
 
         self.state = AppState()
@@ -74,14 +74,12 @@ class MainWindow(QMainWindow):
         self.mode_stack.addWidget(self.browse)
         self.mode_stack.addWidget(self.surprise)
 
-        self.search_page = SearchPage(self.catalog, self.image_loader, self.library)
         self.watchlist_page = WatchlistPage(self.image_loader, self.library)
         self.watched_page = WatchedPage(self.image_loader, self.library)
         self.settings_page = SettingsPage(self.catalog)
 
         self._pages = {
             "Home": self.home_page,
-            "Search": self.search_page,
             "Watchlist": self.watchlist_page,
             "Watched": self.watched_page,
             "Settings": self.settings_page,
@@ -92,7 +90,6 @@ class MainWindow(QMainWindow):
 
         self.home_page.start_requested.connect(self._go_to_decide_mode)
         self.nav_bar.decide_mode_changed.connect(self._go_to_decide_mode)
-        self.nav_bar.page_changed.connect(lambda name: self.nav_bar.set_active_page(name))
 
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
@@ -105,15 +102,13 @@ class MainWindow(QMainWindow):
         self._go_to_page("Home")
 
     def _go_to_page(self, name: str) -> None:
-        self.nav_bar.set_active_page(name)
-        self.nav_bar.set_active_mode("")
+        self.nav_bar.set_active(name)
         self.stack.setCurrentWidget(self._pages[name])
 
     def _go_to_decide_mode(self, decide_mode: str) -> None:
         self.mode_stack.setCurrentIndex(DECIDE_MODES.index(decide_mode))
         self.stack.setCurrentWidget(self.mode_stack)
-        self.nav_bar.set_active_page("")
-        self.nav_bar.set_active_mode(decide_mode)
+        self.nav_bar.set_active(decide_mode)
 
     def _on_app_mode_changed(self, mode: str) -> None:
         self.swipe_stack.setCurrentWidget(self.swipe_group if mode == "group" else self.swipe_solo)

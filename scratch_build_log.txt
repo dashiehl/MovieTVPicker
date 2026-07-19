@@ -1,0 +1,80 @@
+814 already cached with posters, 61 to resolve...
+  [initial] 25/61
+  [initial] 50/61
+  [initial] 61/61
+Sweep 1: retrying 59 misses...
+  [sweep 1] 25/59
+  [sweep 1] 50/59
+  [sweep 1] 59/59
+Sweep 2: retrying 59 misses...
+  [sweep 2] 25/59
+  [sweep 2] 50/59
+  [sweep 2] 59/59
+Sweep 3: retrying 59 misses...
+  [sweep 3] 25/59
+  [sweep 3] 50/59
+  [sweep 3] 59/59
+
+Wrote 875 items to C:\Users\dashi\Documents\MovieTVPicker\data\catalog.json
+Posters found: 816/875
+
+No Wikipedia match found for 59 titles (re-run this command to retry):
+  - Star Trek (1966)
+  - Columbo (1971)
+  - Saturday Night Live (1975)
+  - Law & Order (1990)
+  - Twin Peaks (1990)
+  - Star Trek: Deep Space Nine (1993)
+  - Friends (1994)
+  - King of the Hill (1997)
+  - Stargate SG-1 (1997)
+  - Law & Order: Special Victims Unit (1999)
+  - The Sopranos (1999)
+  - The West Wing (1999)
+  - Curb Your Enthusiasm (2000)
+  - Band of Brothers (2001)
+  - Scrubs (2001)
+  - The Amazing Race (2001)
+  - Monk (2002)
+  - Criminal Minds (2005)
+  - Grey's Anatomy (2005)
+  - Death Note (2006)
+  - Heroes (2006)
+  - The Killing (2007)
+  - Archer (2009)
+  - Fullmetal Alchemist: Brotherhood (2009)
+  - Modern Family (2009)
+  - Parks and Recreation (2009)
+  - RuPaul's Drag Race (2009)
+  - The Walking Dead (2010)
+  - Black Mirror (2011)
+  - Bob's Burgers (2011)
+  - Portlandia (2011)
+  - The Killing (2011)
+  - Veep (2012)
+  - House of Cards (2013)
+  - Rick and Morty (2013)
+  - Superstore (2015)
+  - The Expanse (2015)
+  - This Is Us (2016)
+  - Big Little Lies (2017)
+  - Mindhunter (2017)
+  - Money Heist (2017)
+  - Succession (2018)
+  - Yellowstone (2018)
+  - Euphoria (2019)
+  - The Mandalorian (2019)
+  - Watchmen (2019)
+  - Normal People (2020)
+  - Arcane (2021)
+  - Foundation (2021)
+  - Invincible (2021)
+  - The White Lotus (2021)
+  - Yellowjackets (2021)
+  - Severance (2022)
+  - Slow Horses (2022)
+  - Ahsoka (2023)
+  - Beef (2023)
+  - Silo (2023)
+  - The Diplomat (2023)
+  - The Last of Us (2023)

@@ -4,8 +4,18 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 from app.state import AppState
 from app.theme import refresh_style
 
-PAGES = ["Home", "Search", "Watchlist", "Watched"]
-DECIDE_MODES = ["Swipe", "Mood Quiz", "Browse", "Surprise"]
+# One flat nav row. "page" items route through the plain page stack; "mode" items
+# route through the decide-mode stack — NavBar hides that distinction from callers,
+# who just get a single active button and two signals to listen to.
+NAV_ITEMS = [
+    ("Home", "page"),
+    ("Swipe", "mode"),
+    ("Mood Quiz", "mode"),
+    ("Browse", "mode"),
+    ("Surprise", "mode"),
+    ("Watchlist", "page"),
+    ("Watched", "page"),
+]
 
 
 class NavBar(QFrame):
@@ -25,24 +35,16 @@ class NavBar(QFrame):
         layout.addWidget(title)
         layout.addStretch()
 
-        self._page_buttons: dict[str, QPushButton] = {}
-        for page in PAGES:
-            btn = QPushButton(page)
-            btn.setProperty("class", "nav-link")
-            btn.clicked.connect(lambda checked=False, p=page: self.page_changed.emit(p))
-            layout.addWidget(btn)
-            self._page_buttons[page] = btn
-        self.set_active_page("Home")
-
-        layout.addStretch()
-
-        self._decide_buttons: dict[str, QPushButton] = {}
-        for name in DECIDE_MODES:
+        self._nav_buttons: dict[str, QPushButton] = {}
+        self._nav_kind: dict[str, str] = {}
+        for name, kind in NAV_ITEMS:
             btn = QPushButton(name)
-            btn.setProperty("class", "sub-nav")
-            btn.clicked.connect(lambda checked=False, n=name: self.decide_mode_changed.emit(n))
+            btn.setProperty("class", "nav-link")
+            btn.clicked.connect(lambda checked=False, n=name, k=kind: self._on_nav_clicked(n, k))
             layout.addWidget(btn)
-            self._decide_buttons[name] = btn
+            self._nav_buttons[name] = btn
+            self._nav_kind[name] = kind
+        self.set_active("Home")
 
         layout.addStretch()
 
@@ -63,14 +65,15 @@ class NavBar(QFrame):
         self._refresh_mode_buttons()
         self.state.mode_changed.connect(lambda _mode: self._refresh_mode_buttons())
 
-    def set_active_page(self, page: str) -> None:
-        for name, btn in self._page_buttons.items():
-            btn.setProperty("active", name == page)
-            refresh_style(btn)
+    def _on_nav_clicked(self, name: str, kind: str) -> None:
+        if kind == "page":
+            self.page_changed.emit(name)
+        else:
+            self.decide_mode_changed.emit(name)
 
-    def set_active_mode(self, mode: str) -> None:
-        for name, btn in self._decide_buttons.items():
-            btn.setProperty("active", name == mode)
+    def set_active(self, name: str) -> None:
+        for n, btn in self._nav_buttons.items():
+            btn.setProperty("active", n == name)
             refresh_style(btn)
 
     def _refresh_mode_buttons(self) -> None:

@@ -15,35 +15,59 @@ class WatchedPage(QScrollArea):
         super().__init__(parent)
         self.image_loader = image_loader
         self.library = library
+        self._cards: list[QFrame] = []
+        self._columns = 0
 
         self.setWidgetResizable(True)
-        self._container = QWidget()
-        self._grid = QGridLayout(self._container)
-        self._grid.setSpacing(16)
-        self._grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        self.setWidget(self._container)
 
         library.changed.connect(self.refresh)
         self.refresh()
 
     def refresh(self) -> None:
-        while self._grid.count():
-            child = self._grid.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-
+        scroll_pos = self.verticalScrollBar().value()
         items = sorted(self.library.watched, key=lambda i: i["watchedAt"], reverse=True)
-        if not items:
+        self._cards = [self._build_card(item) for item in items]
+        self._columns = max(1, self.viewport().width() // (CARD_WIDTH + 16))
+        self._rebuild()
+        self.verticalScrollBar().setValue(scroll_pos)
+
+    def _rebuild(self) -> None:
+        # QGridLayout keeps stale column-width metadata even after items are
+        # taken out of it, so a changed column count needs a fresh layout
+        # (and container) rather than reusing the old one.
+        container = QWidget()
+        grid = QGridLayout(container)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(16)
+        grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+
+        if not self._cards:
             empty_label = QLabel("Nothing marked watched yet.")
             empty_label.setProperty("role", "empty-state")
             empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self._grid.addWidget(empty_label, 0, 0)
-            return
+            empty_label.setWordWrap(True)
+            grid.addWidget(empty_label, 0, 0)
+        else:
+            columns = self._columns or 1
+            for i, card in enumerate(self._cards):
+                grid.addWidget(card, i // columns, i % columns)
 
-        columns = max(1, (self.viewport().width() or 900) // (CARD_WIDTH + 16))
-        for i, item in enumerate(items):
-            card = self._build_card(item)
-            self._grid.addWidget(card, i // columns, i % columns)
+        self.setWidget(container)
+
+    def _reflow(self) -> None:
+        if not self._cards:
+            return
+        columns = max(1, self.viewport().width() // (CARD_WIDTH + 16))
+        if columns == self._columns:
+            return
+        self._columns = columns
+        scroll_pos = self.verticalScrollBar().value()
+        self._rebuild()
+        self.verticalScrollBar().setValue(scroll_pos)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._reflow()
 
     def _build_card(self, item: dict) -> QFrame:
         card = QFrame()

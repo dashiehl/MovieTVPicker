@@ -1,10 +1,20 @@
-from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
 
 from app.catalog_store import CatalogStore
 from app.image_loader import ImageLoader
 from app.library_store import LibraryStore
 from app.logic.browse_filter import SORTS, filter_catalog
 from app.widgets.movie_grid import MovieGrid
+
+
+def _filter_field(label_text: str, field: QWidget) -> QVBoxLayout:
+    column = QVBoxLayout()
+    column.setSpacing(4)
+    label = QLabel(label_text)
+    label.setProperty("role", "muted")
+    column.addWidget(label)
+    column.addWidget(field)
+    return column
 
 
 class BrowseMode(QWidget):
@@ -14,44 +24,57 @@ class BrowseMode(QWidget):
         self.library = library
 
         layout = QVBoxLayout(self)
+        layout.setSpacing(16)
 
-        filters = QHBoxLayout()
+        title = QLabel("Browse the catalog")
+        title.setProperty("role", "h1")
+        layout.addWidget(title)
 
-        filters.addWidget(QLabel("Type"))
+        filters_card = QFrame()
+        filters_card.setProperty("class", "card")
+        filters = QVBoxLayout(filters_card)
+        filters.setContentsMargins(20, 16, 20, 16)
+        filters.setSpacing(14)
+
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search movies & TV shows by title...")
+        self.search_input.textChanged.connect(self._refresh)
+        filters.addWidget(self.search_input)
+
+        filter_row = QHBoxLayout()
+        filter_row.setSpacing(20)
+
         self.type_combo = QComboBox()
         self.type_combo.addItems(["All", "Movie", "TV"])
         self.type_combo.currentTextChanged.connect(self._refresh)
-        filters.addWidget(self.type_combo)
+        filter_row.addLayout(_filter_field("Type", self.type_combo))
 
-        filters.addWidget(QLabel("Genre"))
         self.genre_combo = QComboBox()
         self.genre_combo.addItem("Any")
         self.genre_combo.addItems(sorted({g for item in catalog.items for g in item["genres"]}))
         self.genre_combo.currentTextChanged.connect(self._refresh)
-        filters.addWidget(self.genre_combo)
+        filter_row.addLayout(_filter_field("Genre", self.genre_combo))
 
-        filters.addWidget(QLabel("From year"))
         self.year_from = QLineEdit()
         self.year_from.setPlaceholderText("Any")
-        self.year_from.setFixedWidth(70)
+        self.year_from.setFixedWidth(80)
         self.year_from.textChanged.connect(self._refresh)
-        filters.addWidget(self.year_from)
+        filter_row.addLayout(_filter_field("From year", self.year_from))
 
-        filters.addWidget(QLabel("To year"))
         self.year_to = QLineEdit()
         self.year_to.setPlaceholderText("Any")
-        self.year_to.setFixedWidth(70)
+        self.year_to.setFixedWidth(80)
         self.year_to.textChanged.connect(self._refresh)
-        filters.addWidget(self.year_to)
+        filter_row.addLayout(_filter_field("To year", self.year_to))
 
-        filters.addWidget(QLabel("Sort"))
         self.sort_combo = QComboBox()
         self.sort_combo.addItems(list(SORTS.keys()))
         self.sort_combo.currentTextChanged.connect(self._refresh)
-        filters.addWidget(self.sort_combo)
+        filter_row.addLayout(_filter_field("Sort", self.sort_combo))
 
-        filters.addStretch()
-        layout.addLayout(filters)
+        filter_row.addStretch()
+        filters.addLayout(filter_row)
+        layout.addWidget(filters_card)
 
         self.grid = MovieGrid(image_loader, library, empty_message="No results match those filters.")
         layout.addWidget(self.grid)
@@ -68,6 +91,7 @@ class BrowseMode(QWidget):
         genre = "" if self.genre_combo.currentText() == "Any" else self.genre_combo.currentText()
         results = filter_catalog(
             self.catalog.items,
+            query=self.search_input.text(),
             media_type=media_type,
             genre=genre,
             year_from=self._year_value(self.year_from.text()),

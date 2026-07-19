@@ -133,6 +133,12 @@ def record_swipe(catalog_id: str, media_type: str, profile: str, liked: bool) ->
     return created
 
 
+def clear_swipes(profile: str) -> None:
+    db = read_db()
+    db["swipes"] = [s for s in db["swipes"] if s["profile"] != profile]
+    write_db(db)
+
+
 def create_profile(name: str) -> dict:
     name = name.strip()
     db = read_db()

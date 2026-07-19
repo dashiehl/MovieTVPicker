@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QHBoxLayout, QLabel, QLineEdit, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
 )
 
 from app import db
@@ -9,17 +9,22 @@ from app.image_loader import ImageLoader
 from app.library_store import LibraryStore
 from app.logic.swipe_batch import pick_swipe_batch
 from app.state import AppState
+from app.theme import refresh_style
 from app.utils import catalog_key
 from app.widgets.banner import Banner
 from app.widgets.movie_grid import MovieGrid
 from app.widgets.swipe_deck import SwipeDeck
 
+MEDIA_FILTERS = [("All", "all"), ("Movies", "movie"), ("TV Shows", "tv")]
+
 
 def _clear_layout(layout) -> None:
     while layout.count():
         child = layout.takeAt(0)
-        if child.widget():
-            child.widget().deleteLater()
+        widget = child.widget()
+        if widget:
+            widget.setParent(None)
+            widget.deleteLater()
         elif child.layout():
             _clear_layout(child.layout())
 
@@ -36,6 +41,7 @@ class GroupSwipeMode(QWidget):
         self.participant_index = 0
         self.likes_by_participant: dict[str, list[str]] = {}
         self._deck: SwipeDeck | None = None
+        self.media_filter = "all"
 
         outer = QVBoxLayout(self)
         self.stack = QStackedWidget()
@@ -43,8 +49,19 @@ class GroupSwipeMode(QWidget):
 
         # --- setup page ---
         self.setup_page = QWidget()
-        setup_layout = QVBoxLayout(self.setup_page)
-        setup_layout.addWidget(QLabel("Add each person swiping this round, then start the shared batch."))
+        page_layout = QVBoxLayout(self.setup_page)
+        page_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        setup_card = QFrame()
+        setup_card.setProperty("class", "card")
+        setup_card.setFixedWidth(420)
+        setup_layout = QVBoxLayout(setup_card)
+        setup_layout.setContentsMargins(28, 28, 28, 28)
+        setup_layout.setSpacing(14)
+
+        title = QLabel("Add each person swiping this round, then start the shared batch.")
+        title.setWordWrap(True)
+        setup_layout.addWidget(title)
 
         input_row = QHBoxLayout()
         self.name_input = QLineEdit()
@@ -60,6 +77,22 @@ class GroupSwipeMode(QWidget):
         self.participant_list_layout = QVBoxLayout()
         setup_layout.addLayout(self.participant_list_layout)
 
+        filter_label = QLabel("What should we swipe on?")
+        filter_label.setProperty("role", "muted")
+        setup_layout.addWidget(filter_label)
+
+        filter_row = QHBoxLayout()
+        filter_row.setSpacing(8)
+        self._filter_buttons: dict[str, QPushButton] = {}
+        for label, value in MEDIA_FILTERS:
+            btn = QPushButton(label)
+            btn.setProperty("class", "sub-nav")
+            btn.clicked.connect(lambda checked=False, v=value: self._set_media_filter(v))
+            filter_row.addWidget(btn)
+            self._filter_buttons[value] = btn
+        setup_layout.addLayout(filter_row)
+        self._refresh_filter_buttons()
+
         self.error_banner = Banner("error")
         setup_layout.addWidget(self.error_banner)
 
@@ -71,19 +104,22 @@ class GroupSwipeMode(QWidget):
         self.hint_label = QLabel("Add at least 2 people to start.")
         self.hint_label.setProperty("role", "muted")
         setup_layout.addWidget(self.hint_label)
-        setup_layout.addStretch()
 
+        page_layout.addWidget(setup_card, alignment=Qt.AlignmentFlag.AlignHCenter)
         self.stack.addWidget(self.setup_page)
 
         # --- swiping page ---
         self.swiping_page = QWidget()
         self._swiping_layout = QVBoxLayout(self.swiping_page)
+        self._swiping_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         self.stack.addWidget(self.swiping_page)
 
         # --- results page ---
         self.results_page = QWidget()
         results_layout = QVBoxLayout(self.results_page)
-        results_layout.addWidget(QLabel("Everyone liked..."))
+        results_title = QLabel("Everyone liked...")
+        results_title.setProperty("role", "h1")
+        results_layout.addWidget(results_title)
         self.results_grid = MovieGrid(image_loader, library, empty_message="No overlap this round — try another batch!")
         results_layout.addWidget(self.results_grid)
         again_btn = QPushButton("Swipe another batch")
@@ -105,6 +141,15 @@ class GroupSwipeMode(QWidget):
     def _remove_participant(self, name: str) -> None:
         self.state.set_group_participants([p for p in self.state.group_participants if p != name])
         self._refresh_setup_ui()
+
+    def _set_media_filter(self, value: str) -> None:
+        self.media_filter = value
+        self._refresh_filter_buttons()
+
+    def _refresh_filter_buttons(self) -> None:
+        for value, btn in self._filter_buttons.items():
+            btn.setProperty("active", value == self.media_filter)
+            refresh_style(btn)
 
     def _refresh_setup_ui(self) -> None:
         _clear_layout(self.participant_list_layout)
@@ -128,7 +173,9 @@ class GroupSwipeMode(QWidget):
         for name in self.state.group_participants:
             db.create_profile(name)
 
-        self.batch = pick_swipe_batch(self.catalog.items, self.library.watched_keys, size=12)
+        self.batch = pick_swipe_batch(
+            self.catalog.items, self.library.watched_keys, size=12, media_type=self.media_filter
+        )
         if not self.batch:
             self.error_banner.set_text("No candidates available right now — try again later.")
             return

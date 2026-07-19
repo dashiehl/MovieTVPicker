@@ -167,17 +167,21 @@ def build_stylesheet(tokens: dict) -> str:
         background: {tokens['warning_bg']};
         border: 1px solid {tokens['warning_border']};
         border-radius: 8px;
+        padding: 4px;
     }}
     QFrame[class="banner-warning"] QLabel {{
         color: {tokens['warning_text']};
+        padding: 8px 12px;
     }}
     QFrame[class="banner-error"] {{
         background: {tokens['error_bg']};
         border: 1px solid {tokens['error_border']};
         border-radius: 8px;
+        padding: 4px;
     }}
     QFrame[class="banner-error"] QLabel {{
         color: {tokens['error_text']};
+        padding: 8px 12px;
     }}
 
     /* --- Inputs --- */
@@ -187,6 +191,48 @@ def build_stylesheet(tokens: dict) -> str:
         border-radius: 8px;
         padding: 6px 10px;
         color: {tokens['text']};
+        selection-background-color: {tokens['accent']};
+    }}
+    QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{
+        border: 1px solid {tokens['accent']};
+    }}
+    QLineEdit:hover, QComboBox:hover {{
+        border-color: {tokens['accent']};
+    }}
+    QComboBox::drop-down {{
+        border: none;
+        width: 22px;
+    }}
+    QComboBox QAbstractItemView {{
+        background: {tokens['surface']};
+        border: 1px solid {tokens['border']};
+        selection-background-color: {tokens['surface_alt']};
+        selection-color: {tokens['text']};
+        outline: none;
+    }}
+
+    QPlainTextEdit {{
+        background: {tokens['surface']};
+        border: 1px solid {tokens['border']};
+        border-radius: 8px;
+        padding: 8px;
+        color: {tokens['text']};
+    }}
+
+    QPushButton[class="card-action"]:hover:!disabled {{
+        border-color: {tokens['accent']};
+        color: {tokens['accent']};
+    }}
+    QPushButton[class="btn"]:hover:!disabled {{
+        background: {tokens['accent']};
+    }}
+    QPushButton[class="btn-secondary"]:hover {{
+        background: {tokens['border']};
+    }}
+
+    QStatusBar {{
+        background: {tokens['bg']};
+        border-top: 1px solid {tokens['border']};
     }}
 
     QScrollArea {{
@@ -195,6 +241,22 @@ def build_stylesheet(tokens: dict) -> str:
     }}
     QScrollArea > QWidget > QWidget {{
         background: transparent;
+    }}
+    QScrollBar:vertical {{
+        background: transparent;
+        width: 10px;
+        margin: 0;
+    }}
+    QScrollBar::handle:vertical {{
+        background: {tokens['border']};
+        border-radius: 5px;
+        min-height: 24px;
+    }}
+    QScrollBar::handle:vertical:hover {{
+        background: {tokens['text_muted']};
+    }}
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+        height: 0;
     }}
     """
 

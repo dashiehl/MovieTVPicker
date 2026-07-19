@@ -9,6 +9,7 @@ SORTS = {
 
 def filter_catalog(
     items: list[dict],
+    query: str = "",
     media_type: str = "all",
     genre: str = "",
     year_from: int | None = None,
@@ -18,6 +19,9 @@ def filter_catalog(
 ) -> list[dict]:
     exclude_keys = exclude_keys or set()
     result = items
+    if query:
+        q = query.strip().lower()
+        result = [i for i in result if q in i["title"].lower()]
     if media_type != "all":
         result = [i for i in result if i["mediaType"] == media_type]
     if genre:

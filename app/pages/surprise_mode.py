@@ -19,7 +19,12 @@ class SurpriseMode(QWidget):
         self._card: MovieCard | None = None
 
         layout = QVBoxLayout(self)
-        layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setSpacing(16)
+
+        title = QLabel("Feeling indecisive?")
+        title.setProperty("role", "h1")
+        layout.addWidget(title, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._empty_label = QLabel("Click below for a random pick.")
         self._empty_label.setProperty("role", "empty-state")
