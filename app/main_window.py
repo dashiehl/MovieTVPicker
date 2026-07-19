@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
 
     def _position_settings_overlay(self) -> None:
         width = round(self.central.width() * SETTINGS_OVERLAY_WIDTH_FRACTION)
-        self.settings_overlay.setGeometry(self.central.width() - width, 0, width, self.central.height())
+        self.settings_overlay.setGeometry(0, 0, width, self.central.height())
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)

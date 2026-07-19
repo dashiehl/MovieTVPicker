@@ -190,7 +190,7 @@ def build_stylesheet(tokens: dict) -> str:
     /* --- Settings overlay --- */
     QFrame[class="overlay-panel"] {{
         background: {tokens['surface']};
-        border-left: 1px solid {tokens['border']};
+        border-right: 1px solid {tokens['border']};
     }}
 
     /* --- Banners --- */
